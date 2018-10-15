@@ -11,10 +11,10 @@ class foreman::params {
   $unattended_url = undef
   # Enable users authentication (default user:admin pw:changeme)
   $authentication = true
-  # configure foreman via apache and passenger
+  # configure foreman via apache
+  $apache         = true
+  # configure apache with passenger
   $passenger      = true
-  # Enclose apache configuration in <VirtualHost>...</VirtualHost>
-  $use_vhost      = true
   # Server name of the VirtualHost
   $servername     = $::fqdn
   # Server aliases of the VirtualHost

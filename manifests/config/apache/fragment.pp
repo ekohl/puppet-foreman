@@ -6,13 +6,13 @@
 #  $content::  content of the non-ssl virtual host fragment
 #  $ssl_content:: content of the ssl virtual host fragment
 #
-define foreman::config::passenger::fragment(
+define foreman::config::apache::fragment(
   $content=undef,
   $ssl_content=undef,
 ) {
-  require ::foreman::config::passenger
+  require ::foreman::config::apache
 
-  $_priority = $foreman::config::passenger::priority
+  $_priority = $foreman::config::apache::priority
 
   $http_path = "${::apache::confd_dir}/${_priority}-foreman.d/${name}.conf"
   $https_path = "${::apache::confd_dir}/${_priority}-foreman-ssl.d/${name}.conf"
@@ -31,7 +31,7 @@ define foreman::config::passenger::fragment(
     }
   }
 
-  if $ssl_content and $ssl_content != '' and $::foreman::config::passenger::ssl {
+  if $ssl_content and $ssl_content != '' and $::foreman::config::apache::ssl {
     file { $https_path:
       ensure  => file,
       content => $ssl_content,

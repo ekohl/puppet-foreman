@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'foreman::config::passenger::fragment' do
+describe 'foreman::config::apache::fragment' do
   let(:title) { 'test' }
 
   on_os_under_test.each do |os, facts|
@@ -16,7 +16,7 @@ describe 'foreman::config::passenger::fragment' do
 
       context 'with ssl turned off' do
         let :pre_condition do
-          "class { '::foreman::config::passenger':
+          "class { '::foreman::config::apache':
               app_root                => '/usr/share/foreman',
               listen_on_interface     => '192.168.0.1',
               priority                => '05',
@@ -28,12 +28,12 @@ describe 'foreman::config::passenger::fragment' do
               ssl_chain               => '/ca.pem',
               ssl_crl                 => '/crl.pem',
               ssl_protocol            => '-all +TLSv1.2',
-              ruby                    => '/usr/bin/tfm-ruby',
               user                    => 'foreman',
-              prestart                => true,
-              min_instances           => 1,
-              start_timeout           => 600,
-              use_vhost               => true,
+              passenger               => true,
+              passenger_ruby          => '/usr/bin/tfm-ruby',
+              passenger_prestart      => true,
+              passenger_min_instances => 1,
+              passenger_start_timeout => 600,
               servername              => '#{facts[:fqdn]}',
               serveraliases           => ['foreman'],
               foreman_url             => 'https://#{facts[:fqdn]}',
@@ -72,7 +72,7 @@ describe 'foreman::config::passenger::fragment' do
 
       context 'with ssl turned on' do
         let :pre_condition do
-          "class { '::foreman::config::passenger':
+          "class { '::foreman::config::apache':
               app_root                => '/usr/share/foreman',
               listen_on_interface     => '192.168.0.1',
               priority                => '05',
@@ -84,12 +84,12 @@ describe 'foreman::config::passenger::fragment' do
               ssl_chain               => '/ca.pem',
               ssl_crl                 => '/crl.pem',
               ssl_protocol            => '-all +TLSv1.2',
-              ruby                    => '/usr/bin/tfm-ruby',
               user                    => 'foreman',
-              prestart                => true,
-              min_instances           => 1,
-              start_timeout           => 600,
-              use_vhost               => true,
+              passenger               => true,
+              passenger_ruby          => '/usr/bin/tfm-ruby',
+              passenger_prestart      => true,
+              passenger_min_instances => 1,
+              passenger_start_timeout => 600,
               servername              => '#{facts[:fqdn]}',
               serveraliases           => ['foreman'],
               foreman_url             => 'https://#{facts[:fqdn]}',

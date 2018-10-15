@@ -53,7 +53,9 @@
 # $authentication::               Enable user authentication. Initial credentials are set using admin_username
 #                                 and admin_password.
 #
-# $passenger::                    Configure foreman via apache and passenger
+# $apache::                       Configure Foreman via Apache. By default via passenger but otherwise as a reverse proxy.
+#
+# $passenger::                    Whether to configure Apache with passenger or as a reverse proxy.
 #
 # $passenger_ruby::               Ruby interpreter used to run Foreman under Passenger
 #
@@ -61,8 +63,6 @@
 #                                 interpreter
 #
 # $plugin_prefix::                String which is prepended to the plugin package names
-#
-# $use_vhost::                    Enclose apache configuration in VirtualHost tags
 #
 # $servername::                   Server name of the VirtualHost in the webserver
 #
@@ -221,11 +221,11 @@ class foreman (
   Boolean $unattended = $::foreman::params::unattended,
   Optional[Stdlib::HTTPUrl] $unattended_url = $::foreman::params::unattended_url,
   Boolean $authentication = $::foreman::params::authentication,
+  Boolean $apache = $::foreman::params::apache,
   Boolean $passenger = $::foreman::params::passenger,
   Optional[String] $passenger_ruby = $::foreman::params::passenger_ruby,
   Optional[String] $passenger_ruby_package = $::foreman::params::passenger_ruby_package,
   String $plugin_prefix = $::foreman::params::plugin_prefix,
-  Boolean $use_vhost = $::foreman::params::use_vhost,
   Stdlib::Fqdn $servername = $::foreman::params::servername,
   Array[Stdlib::Fqdn] $serveraliases = $::foreman::params::serveraliases,
   Boolean $ssl = $::foreman::params::ssl,
