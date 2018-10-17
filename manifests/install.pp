@@ -54,4 +54,13 @@ class foreman::install {
       ensure => installed,
     }
   }
+
+  if $::foreman::apache and ! $::foreman::passenger {
+    # TODO: foreman-puma subpackage?
+    if $::osfamily == 'RedHat' {
+      package { 'tfm-rubygem-puma':
+        ensure => installed,
+      }
+    }
+  }
 }
