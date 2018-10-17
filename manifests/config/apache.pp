@@ -165,6 +165,13 @@ class foreman::config::apache(
         'params'        => {'retry' => '0'},
       },
     }
+
+    if $::foreman::selinux or (str2bool($::selinux) and $::foreman::selinux != false) {
+      selboolean { 'httpd_can_network_connect':
+        persistent => true,
+        value      => 'on',
+      }
+    }
   }
 
   include ::apache
