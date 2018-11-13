@@ -9,7 +9,6 @@ describe 'foreman::config::apache' do
       describe 'with minimal parameters' do
         let :params do {
           :app_root               => '/usr/share/foreman',
-          :use_vhost              => true,
           :listen_on_interface    => '192.168.0.1',
           :ruby                   => '/usr/bin/tfm-ruby',
           :priority               => '15',
@@ -51,7 +50,6 @@ describe 'foreman::config::apache' do
       describe 'with vhost and ssl' do
         let :params do {
           :app_root               => '/usr/share/foreman',
-          :use_vhost              => true,
           :listen_on_interface    => '192.168.0.1',
           :priority               => '05',
           :servername             => facts[:fqdn],
@@ -158,7 +156,6 @@ describe 'foreman::config::apache' do
           :listen_on_interface    => '192.168.0.1',
           :ruby                   => '/usr/bin/tfm-ruby',
           :priority               => '15',
-          :use_vhost              => true,
           :servername             => facts[:fqdn],
           :serveraliases          => ['foreman', 'also.foreman'],
           :ssl                    => true,
@@ -193,7 +190,6 @@ describe 'foreman::config::apache' do
             :app_root               => '/usr/share/foreman',
             :listen_on_interface    => '192.168.0.1',
             :priority               => '05',
-            :use_vhost              => true,
             :servername             => facts[:fqdn],
             :serveraliases          => ['foreman', 'also.foreman'],
             :ssl                    => true,
@@ -232,7 +228,6 @@ describe 'foreman::config::apache' do
         let :params do {
           :app_root               => '/usr/share/foreman',
           :listen_on_interface    => '192.168.0.1',
-          :use_vhost              => true,
           :priority               => '20',
           :servername             => facts[:fqdn],
           :serveraliases          => ['foreman', 'also.foreman'],
@@ -293,7 +288,6 @@ describe 'foreman::config::apache' do
         let :params do {
           :app_root               => '/usr/share/foreman',
           :listen_on_interface    => '192.168.0.1',
-          :use_vhost              => true,
           :priority               => '20',
           :servername             => facts[:fqdn],
           :serveraliases          => ['foreman', 'also.foreman'],
@@ -330,7 +324,6 @@ describe 'foreman::config::apache' do
       describe 'with ipa_authentication' do
         let :params do {
           :app_root               => '/usr/share/foreman',
-          :use_vhost              => true,
           :listen_on_interface    => '192.168.0.1',
           :ruby                   => '/usr/bin/tfm-ruby',
           :priority               => '15',
