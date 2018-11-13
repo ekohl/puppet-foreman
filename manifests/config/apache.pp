@@ -109,7 +109,7 @@ class foreman::config::apache(
 
   # Check the value in case the interface doesn't exist, otherwise listen on all interfaces
   if $listen_on_interface and $listen_on_interface in split($::interfaces, ',') {
-    $listen_interface = inline_template("<%= @ipaddress_${listen_on_interface} %>")
+    $listen_interface = fact("ipaddress_${listen_on_interface}")
   } else {
     $listen_interface = undef
   }
