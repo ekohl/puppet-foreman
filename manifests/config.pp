@@ -75,7 +75,7 @@ class foreman::config {
     ensure  => absent,
   }
 
-  if $::foreman::passenger  {
+  if $::foreman::apache  {
     contain foreman::config::apache
 
     if $::foreman::ipa_authentication {

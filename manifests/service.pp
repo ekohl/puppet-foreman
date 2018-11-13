@@ -1,5 +1,6 @@
 # Configure the foreman service
 class foreman::service(
+  Boolean $apache = $::foreman::apache,
   Boolean $passenger = $::foreman::passenger,
   Stdlib::Absolutepath $app_root = $::foreman::app_root,
   Boolean $ssl = $::foreman::ssl,
@@ -14,12 +15,20 @@ class foreman::service(
     enable => $jobs_service_enable,
   }
 
-  if $passenger {
-    exec {'restart_foreman':
-      command     => "/bin/touch ${app_root}/tmp/restart.txt",
-      refreshonly => true,
-      cwd         => $app_root,
-      path        => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+  if $apache {
+    if $passenger {
+      exec {'restart_foreman':
+        command     => "/bin/touch ${app_root}/tmp/restart.txt",
+        refreshonly => true,
+        cwd         => $app_root,
+        path        => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+      }
+
+      $service_ensure = 'stopped'
+      $service_enabled = false
+    } else {
+      $service_ensure = 'running'
+      $service_enabled = true
     }
 
     # Anchor httpd service within this service class, but allow other
@@ -32,9 +41,6 @@ class foreman::service(
     if $ssl and defined(Class['puppet::server::config']) {
       Class['puppet::server::config'] -> Class['foreman::service']
     }
-
-    $service_ensure = 'stopped'
-    $service_enabled = false
   } else {
     $service_ensure  = 'running'
     $service_enabled = true

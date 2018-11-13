@@ -6,75 +6,90 @@ describe 'foreman::config::apache' do
     context "on #{os}" do
       let :facts do facts end
 
-      describe 'with minimal parameters' do
-        let :params do {
-          :app_root               => '/usr/share/foreman',
-          :listen_on_interface    => '192.168.0.1',
-          :ruby                   => '/usr/bin/tfm-ruby',
-          :priority               => '15',
-          :servername             => facts[:fqdn],
-          :serveraliases          => ['foreman'],
-          :ssl                    => false,
-          :ssl_cert               => '/cert.pem',
-          :ssl_certs_dir          => '',
-          :ssl_key                => '/key.pem',
-          :ssl_ca                 => '/ca.pem',
-          :ssl_chain              => '/ca.pem',
-          :ssl_crl                => '/crl.pem',
-          :ssl_protocol           => '-all +TLSv1.2',
-          :user                   => 'foreman',
-          :prestart               => true,
-          :min_instances          => 1,
-          :start_timeout          => 90,
-          :foreman_url            => "https://#{facts[:fqdn]}",
-          :keepalive              => true,
-          :max_keepalive_requests => 100,
-          :keepalive_timeout      => 5,
-          :server_port            => 80,
-          :server_ssl_port        => 443,
-          :ipa_authentication     => false,
-        } end
+      let :params do
+        {
+          passenger: true,
+          app_root: '/usr/share/foreman',
+          listen_on_interface: '192.168.0.1',
+          passenger_ruby: '/usr/bin/tfm-ruby',
+          priority: '15',
+          servername: facts[:fqdn],
+          serveraliases: ['foreman'],
+          ssl: false,
+          ssl_cert: '/cert.pem',
+          ssl_certs_dir: '',
+          ssl_key: '/key.pem',
+          ssl_ca: '/ca.pem',
+          ssl_chain: '/ca.pem',
+          ssl_crl: '/crl.pem',
+          ssl_protocol: '-all +TLSv1.2',
+          user: 'foreman',
+          passenger_prestart: true,
+          passenger_min_instances: 1,
+          passenger_start_timeout: 90,
+          foreman_url: "https://#{facts[:fqdn]}",
+          keepalive: true,
+          max_keepalive_requests: 100,
+          keepalive_timeout: 5,
+          server_port: 80,
+          server_ssl_port: 443,
+          ipa_authentication: false,
+          selinux: true,
+        }
+      end
 
+      describe 'with minimal parameters' do
         it 'should include apache with modules' do
           should contain_class('apache')
           should contain_class('apache::mod::headers')
+          should_not contain_class('apache::mod::proxy')
           should contain_class('apache::mod::passenger')
         end
 
         it 'should ensure ownership' do
-          should contain_file("#{params[:app_root]}/config.ru").with_owner(params[:user])
-          should contain_file("#{params[:app_root]}/config/environment.rb").with_owner(params[:user])
+          should contain_file('/usr/share/foreman/config.ru').with_owner('foreman')
+          should contain_file('/usr/share/foreman/config/environment.rb').with_owner('foreman')
+        end
+
+        it { should_not contain_selboolean('httpd_can_network_connect') }
+      end
+
+      describe 'without passenger' do
+        let :params do
+          super().merge(passenger: false)
+        end
+
+        it 'should include apache with modules' do
+          should contain_class('apache')
+          should contain_class('apache::mod::headers')
+          should contain_class('apache::mod::proxy')
+          should_not contain_class('apache::mod::passenger')
+        end
+
+        it { should_not contain_file('/usr/share/foreman/config.ru') }
+        it { should_not contain_file('/usr/share/foreman/config/environment.rb') }
+
+        it do
+          should contain_selboolean('httpd_can_network_connect')
+            .with_value('on')
+            .with_persistent(true)
         end
       end
 
       describe 'with vhost and ssl' do
-        let :params do {
-          :app_root               => '/usr/share/foreman',
-          :listen_on_interface    => '192.168.0.1',
-          :priority               => '05',
-          :servername             => facts[:fqdn],
-          :serveraliases          => ['foreman', 'also.foreman'],
-          :ssl                    => true,
-          :ssl_cert               => '/cert.pem',
-          :ssl_certs_dir          => '',
-          :ssl_key                => '/key.pem',
-          :ssl_ca                 => '/ca.pem',
-          :ssl_chain              => '/ca.pem',
-          :ssl_crl                => '/crl.pem',
-          :ssl_protocol           => '-all +TLSv1.2',
-          :user                   => 'foreman',
-          :prestart               => true,
-          :min_instances          => 1,
-          :start_timeout          => 90,
-          :ruby                   => '/usr/bin/tfm-ruby',
-          :foreman_url            => "https://#{facts[:fqdn]}",
-          :keepalive              => true,
-          :max_keepalive_requests => 100,
-          :keepalive_timeout      => 5,
-          :server_port            => 80,
-          :server_ssl_port        => 443,
-          :ipa_authentication     => false,
-        } end
+        let :params do
+          super().merge(
+            priority: '05',
+            serveraliases: ['foreman', 'also.foreman'],
+            ssl: true,
+            ssl_cert: '/cert.pem',
+            ssl_certs_dir: '',
+            ssl_key: '/key.pem',
+            ssl_ca: '/ca.pem',
+            ssl_chain: '/ca.pem',
+            ssl_crl: '/crl.pem',
+          )
+        end
 
         case facts[:osfamily]
         when 'RedHat'
@@ -84,7 +99,7 @@ describe 'foreman::config::apache' do
         end
 
         it 'should not contain the docroot' do
-          should_not contain_file("#{params[:app_root]}/public")
+          should_not contain_file('/usr/share/foreman/public')
         end
 
         it 'should contain virt host plugin dir' do
@@ -101,7 +116,7 @@ describe 'foreman::config::apache' do
             :servername              => facts[:fqdn],
             :serveraliases           => ['foreman', 'also.foreman'],
             :add_default_charset     => 'UTF-8',
-            :docroot                 => "#{params[:app_root]}/public",
+            :docroot                 => '/usr/share/foreman/public',
             :priority                => '05',
             :options                 => ['SymLinksIfOwnerMatch'],
             :port                    => 80,
@@ -112,7 +127,7 @@ describe 'foreman::config::apache' do
             :keepalive               => 'on',
             :max_keepalive_requests  => 100,
             :keepalive_timeout       => 5,
-            :custom_fragment         => %r{^<Directory ~ #{params[:app_root]}/public/\(assets\|webpack\)>$},
+            :custom_fragment         => %r{^<Directory ~ /usr/share/foreman/public/\(assets\|webpack\)>$},
           })
         end
 
@@ -122,7 +137,7 @@ describe 'foreman::config::apache' do
             :servername              => facts[:fqdn],
             :serveraliases           => ['foreman', 'also.foreman'],
             :add_default_charset     => 'UTF-8',
-            :docroot                 => "#{params[:app_root]}/public",
+            :docroot                 => '/usr/share/foreman/public',
             :priority                => '05',
             :options                 => ['SymLinksIfOwnerMatch'],
             :port                    => 443,
@@ -145,39 +160,24 @@ describe 'foreman::config::apache' do
             :keepalive               => 'on',
             :max_keepalive_requests  => 100,
             :keepalive_timeout       => 5,
-            :custom_fragment         => %r{^<Directory ~ #{params[:app_root]}/public/\(assets\|webpack\)>$},
+            :custom_fragment         => %r{^<Directory ~ /usr/share/foreman/public/\(assets\|webpack\)>$},
           })
         end
       end
 
       describe 'with vhost and ssl, no CRL explicitly' do
-        let :params do {
-          :app_root               => '/usr/share/foreman',
-          :listen_on_interface    => '192.168.0.1',
-          :ruby                   => '/usr/bin/tfm-ruby',
-          :priority               => '15',
-          :servername             => facts[:fqdn],
-          :serveraliases          => ['foreman', 'also.foreman'],
-          :ssl                    => true,
-          :ssl_cert               => '/cert.pem',
-          :ssl_key                => '/key.pem',
-          :ssl_ca                 => '/ca.pem',
-          :ssl_chain              => '/ca.pem',
-          :ssl_certs_dir          => '',
-          :ssl_crl                => '',
-          :ssl_protocol           => '-all +TLSv1.2',
-          :user                   => 'foreman',
-          :prestart               => true,
-          :min_instances          => 1,
-          :start_timeout          => 90,
-          :foreman_url            => "https://#{facts[:fqdn]}",
-          :keepalive              => true,
-          :max_keepalive_requests => 100,
-          :keepalive_timeout      => 5,
-          :server_port            => 80,
-          :server_ssl_port        => 443,
-          :ipa_authentication     => false,
-        } end
+        let :params do
+          super().merge(
+            ssl: true,
+            ssl_cert: '/cert.pem',
+            ssl_key: '/key.pem',
+            ssl_ca: '/ca.pem',
+            ssl_chain: '/ca.pem',
+            ssl_certs_dir: '',
+            ssl_crl: '',
+            ssl_protocol: '-all +TLSv1.2',
+          )
+        end
 
         it do
           should contain_apache__vhost('foreman-ssl').without_ssl_crl
@@ -186,33 +186,15 @@ describe 'foreman::config::apache' do
       end
 
       describe 'with keepalive parameters set' do
-        let :params do {
-            :app_root               => '/usr/share/foreman',
-            :listen_on_interface    => '192.168.0.1',
-            :priority               => '05',
-            :servername             => facts[:fqdn],
-            :serveraliases          => ['foreman', 'also.foreman'],
-            :ssl                    => true,
-            :ssl_cert               => '/cert.pem',
-            :ssl_certs_dir          => '',
-            :ssl_key                => '/key.pem',
-            :ssl_ca                 => '/ca.pem',
-            :ssl_chain              => '/ca.pem',
-            :ssl_crl                => '/crl.pem',
-            :ssl_protocol           => '-all +TLSv1.2',
-            :user                   => 'foreman',
-            :prestart               => true,
-            :min_instances          => 1,
-            :start_timeout          => 90,
-            :ruby                   => '/usr/bin/tfm-ruby',
-            :foreman_url            => "https://#{facts[:fqdn]}",
-            :keepalive              => false,
-            :max_keepalive_requests => 10,
-            :keepalive_timeout      => 15,
-            :server_port            => 80,
-            :server_ssl_port        => 443,
-            :ipa_authentication     => false,
-        } end
+        let :params do
+          super().merge(
+            priority: '05',
+            ssl: true,
+            keepalive: false,
+            max_keepalive_requests: 10,
+            keepalive_timeout: 15,
+          )
+        end
 
         it 'should set the respective parameters' do
           should contain_apache__vhost('foreman').with_keepalive('off')
@@ -225,33 +207,12 @@ describe 'foreman::config::apache' do
       end
 
       describe 'with a different priority set' do
-        let :params do {
-          :app_root               => '/usr/share/foreman',
-          :listen_on_interface    => '192.168.0.1',
-          :priority               => '20',
-          :servername             => facts[:fqdn],
-          :serveraliases          => ['foreman', 'also.foreman'],
-          :ssl                    => true,
-          :ssl_cert               => '/cert.pem',
-          :ssl_certs_dir          => '',
-          :ssl_key                => '/key.pem',
-          :ssl_ca                 => '/ca.pem',
-          :ssl_crl                => '/crl.pem',
-          :ssl_chain              => '/ca.pem',
-          :ssl_protocol           => '-all +TLSv1.2',
-          :prestart               => true,
-          :user                   => 'foreman',
-          :min_instances          => 1,
-          :start_timeout          => 90,
-          :ruby                   => '/usr/bin/tfm-ruby',
-          :foreman_url            => "https://#{facts[:fqdn]}",
-          :keepalive              => true,
-          :max_keepalive_requests => 100,
-          :keepalive_timeout      => 5,
-          :server_port            => 80,
-          :server_ssl_port        => 443,
-          :ipa_authentication     => false,
-        } end
+        let :params do
+          super().merge(
+            priority: '20',
+            ssl: true,
+          )
+        end
 
         case facts[:osfamily]
           when 'RedHat'
@@ -285,33 +246,14 @@ describe 'foreman::config::apache' do
       end
 
       describe 'with different ports set' do
-        let :params do {
-          :app_root               => '/usr/share/foreman',
-          :listen_on_interface    => '192.168.0.1',
-          :priority               => '20',
-          :servername             => facts[:fqdn],
-          :serveraliases          => ['foreman', 'also.foreman'],
-          :ssl                    => true,
-          :ssl_cert               => '/cert.pem',
-          :ssl_certs_dir          => '',
-          :ssl_key                => '/key.pem',
-          :ssl_ca                 => '/ca.pem',
-          :ssl_crl                => '/crl.pem',
-          :ssl_chain              => '/ca.pem',
-          :ssl_protocol           => '-all +TLSv1.2',
-          :prestart               => true,
-          :user                   => 'foreman',
-          :min_instances          => 1,
-          :start_timeout          => 90,
-          :ruby                   => '/usr/bin/tfm-ruby',
-          :foreman_url            => "https://#{facts[:fqdn]}",
-          :keepalive              => true,
-          :max_keepalive_requests => 100,
-          :keepalive_timeout      => 5,
-          :server_port            => 8080,
-          :server_ssl_port        => 8443,
-          :ipa_authentication     => false,
-        } end
+        let :params do
+          super().merge(
+            priority: '20',
+            ssl: true,
+            server_port: 8080,
+            server_ssl_port: 8443,
+          )
+        end
 
         it 'should set the respective parameters' do
           should contain_apache__vhost('foreman').with_port(8080)
@@ -322,33 +264,9 @@ describe 'foreman::config::apache' do
       end
 
       describe 'with ipa_authentication' do
-        let :params do {
-          :app_root               => '/usr/share/foreman',
-          :listen_on_interface    => '192.168.0.1',
-          :ruby                   => '/usr/bin/tfm-ruby',
-          :priority               => '15',
-          :servername             => facts[:fqdn],
-          :serveraliases          => ['foreman'],
-          :ssl                    => false,
-          :ssl_cert               => '/cert.pem',
-          :ssl_certs_dir          => '',
-          :ssl_key                => '/key.pem',
-          :ssl_ca                 => '/ca.pem',
-          :ssl_chain              => '/ca.pem',
-          :ssl_crl                => '/crl.pem',
-          :ssl_protocol           => '-all +TLSv1.2',
-          :user                   => 'foreman',
-          :prestart               => true,
-          :min_instances          => 1,
-          :start_timeout          => 90,
-          :foreman_url            => "https://#{facts[:fqdn]}",
-          :keepalive              => true,
-          :max_keepalive_requests => 100,
-          :keepalive_timeout      => 5,
-          :server_port            => 80,
-          :server_ssl_port        => 443,
-          :ipa_authentication     => true,
-        } end
+        let :params do
+          super().merge(ipa_authentication: true)
+        end
 
         it { should contain_class('apache::mod::authnz_pam') }
         it { should contain_class('apache::mod::intercept_form_submit') }
