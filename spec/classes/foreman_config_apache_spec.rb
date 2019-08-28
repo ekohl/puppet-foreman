@@ -54,6 +54,7 @@ describe 'foreman::config::apache' do
           should contain_class('apache::mod::passenger')
           should_not contain_class('apache::mod::proxy')
           should_not contain_class('apache::mod::proxy_http')
+          should_not contain_class('apache::mod::proxy_wstunnel')
         end
 
         it 'should ensure ownership' do
@@ -221,6 +222,7 @@ describe 'foreman::config::apache' do
             it { should compile.with_all_deps }
             it { should contain_class('apache::mod::proxy') }
             it { should contain_class('apache::mod::proxy_http') }
+            it { should contain_class('apache::mod::proxy_wstunnel') }
             it { should_not contain_class('apache::mod::passenger') }
             it do
               should contain_apache__vhost('foreman')
